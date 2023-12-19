@@ -14,7 +14,7 @@ enum Direction {
 @Observable class Snake {
     var width: CGFloat = 20;
     var height: CGFloat  = 20;
-    var position = CGPoint(x: 10, y: 10)
+    var position = CGPoint(x: 20, y: 20)
     var direction: Direction = .down
     var showGameOverAlert = false
     private let maxHeight = UIScreen.main.bounds.height
@@ -24,43 +24,58 @@ enum Direction {
     
     func startSnake(inDirection: Direction) {
         let duration = ((inDirection == .down) || (inDirection == .up)) ? maxHeight / 60 : maxWidth / 60
-        print(duration)
         self.direction = inDirection
-        timer = Timer.scheduledTimer(withTimeInterval: duration / 1000, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: duration / 100, repeats: true) { _ in
+            print("Snake first x value: \(self.position.x)")
+            print("Snake first y value: \(self.position.y)")
             self.move(inDirection: self.direction)
         }
         RunLoop.current.add(timer!, forMode: .common)
     }
     
     func gameOver() {
-        print("GAME OVERRRRR!!!!!!!!!!!")
         timer?.invalidate()
+        self.position = CGPoint(x: self.width, y: self.width)
         self.showGameOverAlert = true
     }
     
     func move(inDirection: Direction) {
-        if self.position.x == maxWidth || self.position.y == maxHeight || self.position.x == 0 || self.position.y == 0 {
+        if self.position.x >= maxWidth || self.position.y >= maxHeight || self.position.x <= 0 || self.position.y <= 0 {
             gameOver()
         } else {
             switch inDirection {
                 case .right:
                     self.direction = .right
-                    self.position.x += 1
+                self.position.x += self.width
                     break
                 case .left:
                     self.direction = .left
-                    self.position.x -= 1
+                    self.position.x -= self.width
                     break
                 case .up:
                     self.direction = .up
-                    self.position.y -= 1
+                    self.position.y -= self.width
                     break
                 case .down:
                     self.direction = .down
-                    self.position.y += 1
+                    self.position.y += self.width
                     break
                 }
         }
+    }
+}
+
+struct Food {
+    var width: CGFloat = 20
+    var height: CGFloat  = 20
+    var position = CGPoint()
+    let color = Color.white
+    private let maxHeight = UIScreen.main.bounds.height
+    private let maxWidth = UIScreen.main.bounds.width
+    
+    mutating func setFoodPosition() {
+        self.position.x = Array(stride(from: 0, to: maxWidth, by: self.width)).randomElement() ?? 0
+        self.position.y = Array(stride(from: 0, to: maxHeight, by: self.width)).randomElement() ?? 0
     }
 }
 
@@ -71,12 +86,17 @@ struct ContentView: View {
     @State var snake = Snake()
     @State var direction: Direction = .down
     
-    let backgroundColor = Color.init(red: 128/255, green: 171/255, blue: 100/255)
+    @State var food = Food()
+    
+    let backgroundColor = Color.init(red: 159/255, green: 189/255, blue: 141/255)
     
     let snakeColor = Color.init(red: 60/255, green: 58/255, blue: 42/255)
     
     var body: some View {
-        VStack {
+        ZStack {
+            Rectangle()
+                .fill(food.color)
+                .frame(width: food.width, height: food.height).position(food.position)
             Rectangle()
                 .fill(snakeColor)
                 .frame(width: snake.width, height: snake.height).position(snake.position)
@@ -84,6 +104,7 @@ struct ContentView: View {
         .background(backgroundColor)
         .onAppear {
             snake.startSnake(inDirection: .down)
+            food.setFoodPosition()
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
             .onEnded { value in
@@ -112,8 +133,8 @@ struct ContentView: View {
         .alert(Text("Game Over! Oopssss...sss..ss"), isPresented: $snake.showGameOverAlert) {
             Button("Start Over", role: .cancel) {
                 snake.showGameOverAlert = false
-                snake.position = CGPoint(x: 10, y: 10)
                 snake.startSnake(inDirection: .down)
+                food.setFoodPosition()
             }
             
         }
