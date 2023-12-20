@@ -11,6 +11,9 @@ enum Direction {
     case right, left, up, down
 }
 
+let width = 20
+
+
 @Observable class Snake {
     var width: CGFloat = 20;
     var height: CGFloat  = 20;
@@ -35,7 +38,7 @@ enum Direction {
     
     func gameOver() {
         timer?.invalidate()
-        self.position = CGPoint(x: self.width, y: self.width)
+        self.position = CGPoint(x: width, y: width)
         self.showGameOverAlert = true
     }
     
@@ -46,26 +49,26 @@ enum Direction {
             switch inDirection {
                 case .right:
                     self.direction = .right
-                self.position.x += self.width
+                self.position.x += width
                     break
                 case .left:
                     self.direction = .left
-                    self.position.x -= self.width
+                    self.position.x -= width
                     break
                 case .up:
                     self.direction = .up
-                    self.position.y -= self.width
+                    self.position.y -= width
                     break
                 case .down:
                     self.direction = .down
-                    self.position.y += self.width
+                    self.position.y += width
                     break
                 }
         }
     }
 }
 
-struct Food {
+@Observable class Food {
     var width: CGFloat = 20
     var height: CGFloat  = 20
     var position = CGPoint()
@@ -73,9 +76,9 @@ struct Food {
     private let maxHeight = UIScreen.main.bounds.height
     private let maxWidth = UIScreen.main.bounds.width
     
-    mutating func setFoodPosition() {
-        self.position.x = Array(stride(from: 0, to: maxWidth, by: self.width)).randomElement() ?? 0
-        self.position.y = Array(stride(from: 0, to: maxHeight, by: self.width)).randomElement() ?? 0
+    func setFoodPosition() {
+        self.position.x = Array(stride(from: 0, to: maxWidth, by: self.height)).randomElement() ?? 0
+        self.position.y = Array(stride(from: 0, to: maxHeight, by: self.height)).randomElement() ?? 0
     }
 }
 
@@ -103,8 +106,7 @@ struct ContentView: View {
         }
         .background(backgroundColor)
         .onAppear {
-            snake.startSnake(inDirection: .down)
-            food.setFoodPosition()
+            resetValues()
         }
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
             .onEnded { value in
@@ -133,11 +135,15 @@ struct ContentView: View {
         .alert(Text("Game Over! Oopssss...sss..ss"), isPresented: $snake.showGameOverAlert) {
             Button("Start Over", role: .cancel) {
                 snake.showGameOverAlert = false
-                snake.startSnake(inDirection: .down)
-                food.setFoodPosition()
+                resetValues()
             }
             
         }
+    }
+    
+    private func resetValues() {
+        snake.startSnake(inDirection: .down, food: food)
+        food.setFoodPosition()
     }
 }
 
